@@ -1,25 +1,23 @@
 const http = require("http");
 const router = require("./lib/router").router;
-const decrypt = require(__dirname + "/lib/crypt").decrypt;
+const decrypt = require("./lib/crypt").decrypt;
 
 /**
  * Database setup...
  */
 const mysql = require("mysql");
-let port = "3306";
+let port = 3306;
 
-if (process.env.NODE_ENV === "development") port = "3325";
+if (process.env.NODE_ENV === "development") port = 3325;
+
+const db = require("./config/database.json");
 
 const connection = mysql.createConnection({
   host: "localhost",
   port,
-  user: "lancteme_lance",
-  password: decrypt({
-    iv: "c87f3baa56713f202709e2ead3ac4508",
-    encryptedData:
-      "396edc2a8f2966c2dcb57dcc243682a7bca0721ebc1e80531639fd3ca94ef61b8afdbdd061161c0bb2f6db4d6448c8d2",
-  }),
-  database: "lancteme_blog",
+  user: db.username,
+  password: decrypt(db.password),
+  database: db.database,
 });
 connection.connect();
 
@@ -28,7 +26,7 @@ connection.connect();
  */
 const winston = require("winston");
 const { createLogger, format } = winston;
-const { combine, timestamp, label, prettyPrint } = format;
+const { combine, timestamp, prettyPrint } = format;
 require("winston-daily-rotate-file");
 const dailyRotateFile = new winston.transports.DailyRotateFile({
   "level": "debug",
@@ -69,7 +67,7 @@ const _validateKey = (req, callback) => {
     decrypt({
       iv: api_key.substring(0, 32),
       encryptedData: api_key.substring(32),
-    }) === "Lance'sMostExcellentBlog"
+    }) === require("./config/api_key").api_key
   ) {
     req._db = connection;
     req._id = api_key;
@@ -98,17 +96,15 @@ if (process.env.NODE_ENV === "development") {
   server.listen();
 }
 
-console.log(server.address().port);
-
 process.on("SIGINT", function () {
-  logger.log("\nProcessing: Ctrl+C");
+  logger.info("\nProcessing: Ctrl+C");
   connection.end();
   server.close();
 });
 
 // Catch the termination request being sent to the session
 process.on("SIGTERM", function () {
-  logger.log("\nProcessing: SIGTERM");
+  logger.info("\nProcessing: SIGTERM");
   connection.end();
   server.close();
 });

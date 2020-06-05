@@ -6,3 +6,6 @@ logs
 package-lock.json
 .idea
 yarn.lock
+config
+*.log
+genkey.js
