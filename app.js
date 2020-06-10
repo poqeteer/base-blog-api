@@ -46,13 +46,13 @@ const logger = createLogger({
 
 const _validateKey = (req, callback) => {
   if (req.method === "OPTIONS") {
+    console.log("OPTION", req.headers);
     callback();
     return;
   }
   // Load the api_key from the header...
   var api_key = req.headers.authorization;
   if (!api_key) api_key = req.headers.api_key;
-  if (!api_key) api_key = req.headers['access-control-request-headers'];
   // No api_key in the header?
   if (!api_key || api_key.length < 96) {
     logger.error('Server:: No ApiKey');
@@ -92,19 +92,20 @@ const server = http.createServer(function (req, res) {
 
 if (process.env.NODE_ENV === "development") {
   server.listen(3001);
+  console.log("listening on: 3001");
 } else {
   server.listen();
 }
 
 process.on("SIGINT", function () {
-  logger.info("\nProcessing: Ctrl+C");
+  logger.info("Processing: Ctrl+C");
   connection.end();
   server.close();
 });
 
 // Catch the termination request being sent to the session
 process.on("SIGTERM", function () {
-  logger.info("\nProcessing: SIGTERM");
+  logger.info("Processing: SIGTERM");
   connection.end();
   server.close();
 });
