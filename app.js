@@ -67,14 +67,14 @@ const _validateKey = (req, callback) => {
     decrypt({
       iv: api_key.substring(0, 32),
       encryptedData: api_key.substring(32),
-    }) === require("./config/api_key").api_key
+    }) === require(process.env.NODE_ENV === "development" ? "./config/dev_key.json" : "./config/api_key.json").api_key
   ) {
     req._db = connection;
     req._id = api_key;
     req._logger = logger;
     callback();
   } else {
-    logger.error("Bad key!!!");
+    logger.error("Bad key!!! "+api_key);
     callback(new Error("Invalid ApiKey"));
   }
 };
